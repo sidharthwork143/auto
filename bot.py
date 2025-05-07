@@ -51,7 +51,8 @@ async def auto_reply(client, message):
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.reply_photo(
-        photo="https://source.unsplash.com/400x400/?animal",
+        photo="photo="https://upload.wikimedia.org/wikipedia/commons/3/36/Felis_catus-cat_on_snow.jpg"
+",
         caption="🌹 *Tumhe chahna meri aadat ban chuki hai...*\n\n_Kabhi sochta hoon, chand se keh doon tumse milne ka tareeka!_ 💖"
     )
 
