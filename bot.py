@@ -1,14 +1,23 @@
-import asyncio
 import os
+import asyncio
 from pyrogram import Client, filters
+from flask import Flask
 
+# Environment Variables
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 LOG_CHAT = os.getenv("LOG_CHAT", "-1001234567890")  # Admin log chat ID
-DELETE_TIME = int(os.getenv("DELETE_TIME", 5))  # Default delete time in minutes
+DELETE_TIME = int(os.getenv("DELETE_TIME", 5))  # Default delete time
+PORT = int(os.getenv("PORT", 8080))  # Port for Flask server
 
 app = Client("auto_delete_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+flask_app = Flask(__name__)
+
+# Flask Health Check (for Render/Koyeb)
+@flask_app.route('/')
+def home():
+    return "Bot Running Successfully!"
 
 # Auto-delete message function
 async def delete_message(chat_id, message_id, delay):
@@ -20,7 +29,7 @@ async def delete_message(chat_id, message_id, delay):
 async def auto_delete(client, message):
     asyncio.create_task(delete_message(message.chat.id, message.message_id, DELETE_TIME))
 
-# Command to adjust auto-delete timer
+# Command to adjust delete timer
 @app.on_message(filters.command("set_autodelete", prefixes="/") & filters.group)
 async def set_timer(client, message):
     global DELETE_TIME
@@ -46,11 +55,11 @@ async def log_deleted_message(client, message):
 async def auto_reply(client, message):
     await message.reply("🌟 Hello! Hope you have an amazing day! 😊")
 
-# Start command with a static animal image and romantic shayari
+# Start command with static image and romantic shayari
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.reply_photo(
-        photo="https://vault.pictures/p/ff7a7f5d976e4f4289e961a9b90d78d8",  # Replace with direct image link
+        photo="https://i.imgur.com/XYZ123.jpg",  # Replace with direct image link
         caption="🌹 *Tumhe chahna meri aadat ban chuki hai...*\n\n_Kabhi sochta hoon, chand se keh doon tumse milne ka tareeka!_ 💖"
     )
 
@@ -61,4 +70,15 @@ async def menu(client, message):
         "🛠 **Bot Menu** 🛠\n\n- `/set_autodelete <minutes>` Adjust delete timer\n- `/start` Send welcome message\n- `/menu` Show options",
     )
 
-app.run()
+# Bot & Flask Server Running Together
+async def start_bot():
+    await app.start()
+    print("Bot is running...")
+
+async def run_flask():
+    flask_app.run(host="0.0.0.0", port=PORT)
+
+async def main():
+    await asyncio.gather(start_bot(), run_flask())
+
+asyncio.run(main())
