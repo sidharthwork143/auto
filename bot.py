@@ -42,7 +42,7 @@ async def set_delete_time(update: Update, context):
         await update.message.reply_text("❌ Invalid format! Use /settime <seconds>.")
 
 async def main():
-    """Run bot"""
+    """Run bot with proper event loop cleanup"""
     app = Application.builder().token(TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
@@ -50,9 +50,17 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, delete_messages))
 
     print("🚀 Bot is running...")
-    await app.run_polling()
+    
+    try:
+        await app.run_polling()
+    except KeyboardInterrupt:
+        print("⛔ Bot shutting down...")
+    finally:
+        await app.shutdown()
 
-# Fix: Use get_event_loop instead of asyncio.run()
+# Fix: Properly close event loop to avoid RuntimeError
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.run_until_complete(main())
+    loop.close()
