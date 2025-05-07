@@ -59,7 +59,7 @@ async def auto_reply(client, message):
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.reply_photo(
-        photo="https://i.imgur.com/XYZ123.jpg",  # Replace with direct image link
+        photo="https://vault.pictures/p/ff7a7f5d976e4f4289e961a9b90d78d8",  # Replace with direct image link
         caption="🌹 *Tumhe chahna meri aadat ban chuki hai...*\n\n_Kabhi sochta hoon, chand se keh doon tumse milne ka tareeka!_ 💖"
     )
 
