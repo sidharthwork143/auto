@@ -1,5 +1,4 @@
 import os
-import logging
 import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -50,7 +49,10 @@ async def main():
     app.add_handler(CommandHandler("settime", set_delete_time))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, delete_messages))
 
+    print("🚀 Bot is running...")
     await app.run_polling()
 
+# Fix: Use get_event_loop instead of asyncio.run()
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
