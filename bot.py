@@ -1,66 +1,58 @@
-import os
+from pyrogram import Client, filters
+from pyrogram.types import Message
 import asyncio
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from dotenv import load_dotenv
+import os
 
-# Load environment variables
-load_dotenv()
-TOKEN = os.getenv("BOT_TOKEN")
-LOG_CHANNEL_ID = os.getenv("LOG_CHANNEL_ID")
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-if not TOKEN or not LOG_CHANNEL_ID:
-    raise ValueError("⚠️ Missing essential API credentials in environment variables!")
+# Default delete time in seconds (5 minutes)
+delete_after = {}
 
-DELETE_TIME = 300  # Default delete time (300 sec = 5 minutes)
+app = Client("autodelete_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-romantic_shayari = """💖 तुझे देख कर ही मैं खो जाता हूँ,
-    तेरा नाम सुनते ही मुस्कुरा जाता हूँ...💖"""
 
-async def start(update: Update, context):
-    """Send start message with shayari & log activity"""
-    user = update.effective_user
-    await update.message.reply_text(f"{romantic_shayari}\n\n🌟 Hey {user.first_name}, bot activated!")
-    await context.bot.send_message(
-        chat_id=LOG_CHANNEL_ID,
-        text=f"🚀 Bot started by {user.first_name} ({user.id}) in group: {update.message.chat.title}"
-    )
+ROMANTIC_SHAYARI = """💌
+*Ek pal ki mohabbat mein zindagi badal gayi,*
+*Tera dekha to meri duniya badal gayi.*
+*Tujh se milkar aisa laga mujhe,*
+*Jaise barson ki pyaas mein barsaat mil gayi...*
+"""
 
-async def delete_messages(update: Update, context):
-    """Delete messages after DELETE_TIME"""
-    await asyncio.sleep(DELETE_TIME)
-    await context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
+@app.on_message(filters.command("start"))
+async def start(client, message: Message):
+    await message.reply_text(ROMANTIC_SHAYARI, quote=True)
 
-async def set_delete_time(update: Update, context):
-    """Adjust deletion time"""
-    global DELETE_TIME
+@app.on_message(filters.command("settime") & filters.group)
+async def set_time(client, message: Message):
+    global delete_after
+    if not message.from_user:
+        return
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+
+    member = await client.get_chat_member(chat_id, user_id)
+    if member.status not in ("administrator", "creator"):
+        await message.reply("⛔ Sirf admin hi timer set kar sakte hain.")
+        return
+
     try:
-        new_time = int(update.message.text.split()[1])
-        DELETE_TIME = new_time
-        await update.message.reply_text(f"⌛ Message deletion time updated to {DELETE_TIME} seconds.")
-    except ValueError:
-        await update.message.reply_text("❌ Invalid format! Use /settime <seconds>.")
+        seconds = int(message.text.split(maxsplit=1)[1])
+        delete_after[chat_id] = seconds
+        await message.reply(f"✅ Messages ab {seconds} seconds baad delete honge.")
+    except:
+        await message.reply("❌ Galat format. Use: `/settime 300`", quote=True)
 
-async def main():
-    """Run bot with proper event loop cleanup"""
-    app = Application.builder().token(TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("settime", set_delete_time))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, delete_messages))
-
-    print("🚀 Bot is running...")
-    
+@app.on_message(filters.text & ~filters.command(["start", "settime"]))
+async def delete_later(client, message: Message):
+    chat_id = message.chat.id
+    time_to_delete = delete_after.get(chat_id, 300)  # Default 300 sec
+    await asyncio.sleep(time_to_delete)
     try:
-        await app.run_polling()
-    except KeyboardInterrupt:
-        print("⛔ Bot shutting down...")
-    finally:
-        await app.shutdown()
+        await message.delete()
+    except:
+        pass
 
-# Fix: Properly close event loop to avoid RuntimeError
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(main())
-    loop.close()
+    app.run()
