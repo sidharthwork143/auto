@@ -1,27 +1,26 @@
 import asyncio
+import os
 from pyrogram import Client, filters
-from datetime import datetime, timedelta
 
-API_ID = "28999970"
-API_HASH = "725d134d6288a9d553245f18e1d89a28"
-BOT_TOKEN = "5936763856:AAFLWJ80089Hfu4ebtXg23KE67UAWaz2Rp0"
-
-DELETE_TIME = 5  # Default delete time (minutes)
-LOG_CHAT = "-1001728240047"  # Admin log group
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+LOG_CHAT = os.getenv("LOG_CHAT", "-1001234567890")  # Admin log chat ID
+DELETE_TIME = int(os.getenv("DELETE_TIME", 5))  # Default delete time in minutes
 
 app = Client("auto_delete_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# Auto-delete message
+# Auto-delete message function
 async def delete_message(chat_id, message_id, delay):
     await asyncio.sleep(delay * 60)
     await app.delete_messages(chat_id, message_id)
 
+# Auto-delete normal messages
 @app.on_message(filters.group & ~filters.service)
 async def auto_delete(client, message):
-    global DELETE_TIME
     asyncio.create_task(delete_message(message.chat.id, message.message_id, DELETE_TIME))
 
-# Command to update delete timer
+# Command to adjust auto-delete timer
 @app.on_message(filters.command("set_autodelete", prefixes="/") & filters.group)
 async def set_timer(client, message):
     global DELETE_TIME
@@ -32,7 +31,7 @@ async def set_timer(client, message):
     except:
         await message.reply("❌ Use: `/set_autodelete <minutes>`")
 
-# Auto-delete specific types (images, links, keywords)
+# Auto-delete specific message types (images, links, keywords)
 @app.on_message(filters.photo | filters.regex(r"https?://") | filters.text & filters.regex("delete_this"))
 async def selective_delete(client, message):
     asyncio.create_task(delete_message(message.chat.id, message.message_id, DELETE_TIME))
@@ -42,17 +41,16 @@ async def selective_delete(client, message):
 async def log_deleted_message(client, message):
     await app.send_message(LOG_CHAT, f"Deleted message: {message.text}")
 
-# Greeting response
+# Greeting auto-replies for "Hello" or "Good morning"
 @app.on_message(filters.text & filters.regex(r"(?i)hello|good morning"))
 async def auto_reply(client, message):
     await message.reply("🌟 Hello! Hope you have an amazing day! 😊")
 
-# Start command with animal pic and romantic shayari
+# Start command with a static animal image and romantic shayari
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.reply_photo(
-        photo="photo="https://vault.pictures/p/a744672006674da58b9ad883ec619db3"
-",
+        photo="https://i.imgur.com/XYZ123.jpg",  # Replace with direct image link
         caption="🌹 *Tumhe chahna meri aadat ban chuki hai...*\n\n_Kabhi sochta hoon, chand se keh doon tumse milne ka tareeka!_ 💖"
     )
 
