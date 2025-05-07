@@ -1,17 +1,17 @@
 import os
 import asyncio
 import threading
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from flask import Flask
 from datetime import datetime
 import random
 import logging
 
 # Environment Variables
-API_ID = os.getenv("API_ID")
+API_ID = int(os.getenv("API_ID", 0))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-LOG_CHAT = os.getenv("LOG_CHAT", "-1001728240047")  # Admin log chat ID
+LOG_CHAT = os.getenv("LOG_CHAT", "-1001234567890")  # Admin log chat ID
 DELETE_TIME = int(os.getenv("DELETE_TIME", 5))  # Default delete time
 PORT = int(os.getenv("PORT", 8080))  # Port for Flask server
 
@@ -113,6 +113,7 @@ def run_flask():
 async def start_bot():
     await app.start()
     print("✅ Bot is running...")
+    await idle()  # Keeps bot alive
 
 threading.Thread(target=run_flask).start()
 asyncio.run(start_bot())
