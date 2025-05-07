@@ -1,5 +1,2 @@
-pyrogram
-tgcrypto
-flask
-asyncio
-uvicorn
+python-telegram-bot
+python-dotenv
