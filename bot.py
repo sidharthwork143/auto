@@ -11,7 +11,7 @@ import logging
 API_ID = int(os.getenv("API_ID", 0))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-LOG_CHAT = os.getenv("LOG_CHAT", "-1001234567890")  # Admin log chat ID
+LOG_CHAT = os.getenv("LOG_CHAT", "-1001728240047")  # Admin log chat ID
 DELETE_TIME = int(os.getenv("DELETE_TIME", 5))  # Default delete time
 PORT = int(os.getenv("PORT", 8080))  # Port for Flask server
 
