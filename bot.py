@@ -1,53 +1,50 @@
-import os
+import logging
+from telegram import Update, ChatPermissions
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 import asyncio
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from aiohttp import web
+import os
 
-# --- ENV VARIABLES ---
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 
-# --- Setup bot client ---
-app = Client("koyeb_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+# Adult quote
+ADULT_QUOTE = "Sex is like math: Add the bed, subtract the clothes, divide the legs, and hope you don't multiply. 🔥"
 
-# --- Web server for Koyeb health check ---
-async def web_handler(request):
-    return web.Response(text="✅ Bot is alive!")
+# Start command handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(ADULT_QUOTE)
 
-async def run_web():
-    app_web = web.Application()
-    app_web.router.add_get("/", web_handler)
-    runner = web.AppRunner(app_web)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8080)
-    await site.start()
+# Message delete handler
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.message
+    # Only delete messages in groups
+    if msg.chat.type in ["group", "supergroup"]:
+        await asyncio.sleep(300)  # wait for 5 minutes
+        try:
+            await context.bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
+        except Exception as e:
+            logging.warning(f"Failed to delete message: {e}")
 
-# --- /start command ---
-@app.on_message(filters.command("start") & filters.private)
-async def start(client, message: Message):
-    await message.reply_text(
-        "**🤣 Adult Joke 🤭**\n\n"
-        "*Biwi ne kaha: Jab bhi tum mujhe dekho, kuch karne ka mann nahi karta.*\n"
-        "*Pati bola: Tumhara kaam ho gaya, mera mood kharaab karne ka...*"
-    )
-
-# --- Auto-delete group messages ---
-@app.on_message(filters.group & filters.text)
-async def auto_delete(client, message: Message):
-    await asyncio.sleep(300)  # 5 minutes = 300 seconds
-    try:
-        await message.delete()
-    except Exception as e:
-        print(f"Delete error: {e}")
-
-# --- Main run block ---
+# Main function to run the bot
 async def main():
-    await run_web()       # start web server for Koyeb health check
-    await app.start()     # start Telegram bot
-    print("🤖 Bot is running...")
-    await asyncio.Event().wait()
+    TOKEN = os.getenv("BOT_TOKEN")  # use environment variable or replace below
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Bot is running...")
+    await app.run_polling()
 
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())
