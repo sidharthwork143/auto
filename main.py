@@ -36,7 +36,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main function to run the bot
 async def main():
-    TOKEN = os.getenv("BOT_TOKEN")  # use environment variable or replace below
+    TOKEN = os.getenv("7847633442:AAHKWU_NDSvmndZ9QmtcYVekEsr_ZlYtcTE")  # use environment variable or replace below
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
